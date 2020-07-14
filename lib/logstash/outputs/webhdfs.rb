@@ -96,13 +96,13 @@ class LogStash::Outputs::WebHdfs < LogStash::Outputs::Base
   config :retry_known_errors, :validate => :boolean, :default => true
 
   # Initial interval (in seconds) waited between consecutive retries. Actual interval increases with each retry
-  # and is proportional to the number of executed attempts, up to limit given in `retry_max_interval`.
+  # and is proportional to the number of executed attempts, up to the limit given in `retry_max_interval`.
   config :retry_interval, :validate => :number, :default => 0.5
 
   # Max interval (in seconds) waited between consecutive retries. Set to `-1` for unlimited retry interval.
   config :retry_max_interval, :validate => :number, :default => -1
 
-  # How many times should we retry. If retry_times is exceeded, an error will be logged and the event will be discarded. 
+  # How many times should we retry. If retry_times is exceeded an error will be logged and the event will be discarded. 
   # Set to `-1` for infinite retries.
   config :retry_times, :validate => :number, :default => 5
 
@@ -218,15 +218,15 @@ class LogStash::Outputs::WebHdfs < LogStash::Outputs::Base
   end
 
   def write_data(path, data)
-    # Retry max_retry times. This can solve problems like leases being hold by another process. Sadly this is no
-    # KNOWN_ERROR in rubys webhdfs client.
+    # Retry max_retry times. This can solve problems like leases being held by another process. Sadly this is no
+    # KNOWN_ERROR in ruby's webhdfs client.
     write_tries = 0
     begin
       # Try to append to already existing file, which will work most of the times.
       @client.append(path, data)
       # File does not exist, so create it.
     rescue WebHDFS::FileNotFoundError
-      # Add snappy header if format is "file".
+      # Add snappy header, if format is "file".
       if @compression == "snappy" and @snappy_format == "file"
         @client.create(path, get_snappy_header! + data)
       elsif
@@ -236,7 +236,7 @@ class LogStash::Outputs::WebHdfs < LogStash::Outputs::Base
     rescue => e
       if write_tries < @retry_times || @retry_times == -1
         write_tries += 1
-        # Handle StandbyException and do failover. Still we want to exit if write_tries >= @retry_times.
+        # Handle StandbyException and do failover.
         if @standby_client && (e.message.match(/Failed to connect to host #{@client.host}:#{@client.port}/) || e.message.match(/StandbyException/))
           do_failover
         else
