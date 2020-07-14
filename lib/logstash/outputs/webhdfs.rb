@@ -102,7 +102,7 @@ class LogStash::Outputs::WebHdfs < LogStash::Outputs::Base
   # Max interval (in seconds) waited between consecutive retries. Set to `-1` for unlimited retry interval.
   config :retry_max_interval, :validate => :number, :default => -1
 
-  # How many times should we retry. If retry_times is exceeded an error will be logged and the event will be discarded. 
+  # How many times should we retry. If retry_times is exceeded, an error will be logged and the event will be discarded. 
   # Set to `-1` for infinite retries.
   config :retry_times, :validate => :number, :default => 5
 
@@ -226,7 +226,7 @@ class LogStash::Outputs::WebHdfs < LogStash::Outputs::Base
       @client.append(path, data)
       # File does not exist, so create it.
     rescue WebHDFS::FileNotFoundError
-      # Add snappy header, if format is "file".
+      # Add snappy header if format is "file".
       if @compression == "snappy" and @snappy_format == "file"
         @client.create(path, get_snappy_header! + data)
       elsif
